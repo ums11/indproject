@@ -1,0 +1,181 @@
+{
+  "name": "My workflow 3",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c3712f97-968c-4d53-b58d-4110c49e3820",
+      "name": "Telegram Trigger",
+      "webhookId": "bf2a5ca3-f966-4a00-861b-50cbe48299e2",
+      "credentials": {
+        "telegramApi": {
+          "id": "2pTzmxH9Mhq9Zpvp",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        580,
+        0
+      ],
+      "id": "f843f822-a9e7-40bd-a7e6-6074e817736c",
+      "name": "Telegram",
+      "webhookId": "43ebe482-f786-4bc8-9f1e-9f4058c9b94b",
+      "credentials": {
+        "telegramApi": {
+          "id": "2pTzmxH9Mhq9Zpvp",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama3.1:latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        160,
+        220
+      ],
+      "id": "05fad80b-7694-4b72-8844-ebfdf4ef8cac",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "nnIt1tPpUClVBxc5",
+          "name": "Ollama account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://www.han.nl/studeren/faq/?gad_source=1&gad_campaignid=22392675332&gbraid=0AAAAADlZ-dp8PFSiJc8wxQkEKzp229LPw&gclid=CjwKCAjw6NrBBhB6EiwAvnT_roVq6ta8u49lQHDQp_rETo1r3mJ9I1SSSEmIqokicr9uIlVgcE71OxoCFWIQAvD_BwE",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        220
+      ],
+      "id": "39f8c238-7af0-4c49-ac0f-3eaa52d75897",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        220,
+        0
+      ],
+      "id": "682ff6c8-e39c-4209-ac3a-1223ab541eb7",
+      "name": "HANnah"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        320,
+        220
+      ],
+      "id": "7c41bc8e-5c7a-4a61-8746-892b1a698086",
+      "name": "Simple Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "HANnah",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "HANnah",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "ai_tool": [
+        [
+          {
+            "node": "HANnah",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HANnah": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "HANnah",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8731b73a-5b63-4ee3-88ce-d24ebba97afc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "558d88703fb65b2d0e44613bc35916258b0f0bf983c5d4730c00c424b77ca36a"
+  },
+  "id": "HeN889k1sGyvn1Ij",
+  "tags": []
+}

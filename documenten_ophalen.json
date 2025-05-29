@@ -1,0 +1,162 @@
+{
+  "name": "documenten ophalen",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "allowFileUploads": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "dbde6463-d2a0-4100-9c7e-bcfe5549321e",
+      "name": "When chat message received",
+      "webhookId": "10b43520-c5c2-469f-8e84-6fe5b0d1d430"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are an intelligent assistant with access to a semantic search index containing embedded documents. These documents include metadata such as source, document type, and access level.\n\nYour job is to:\n- Retrieve relevant text chunks based on semantic similarity to the user query.\n- Optionally filter results based on metadata constraints (e.g., only internal documents).\n- Extract accurate, grounded answers using the retrieved content.\n- If the answer is unclear or the retrieved content is insufficient, say: “Based on the available documents, I cannot answer that definitively.”\n\nUser question: {user_input}\n\nIf relevant, include source information and quote short passages when necessary.\nBe concise, but include all essential details."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        220,
+        0
+      ],
+      "id": "71d5cab4-1f34-4898-88dd-8d5ba9102ef7",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama3.1:latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        160,
+        180
+      ],
+      "id": "ebcb7c35-0613-43a8-b836-bfad3d11ea9e",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "nnIt1tPpUClVBxc5",
+          "name": "Ollama account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "stage",
+        "toolDescription": "documenten die je kunt gebruiken om data op te halen.",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "stage",
+          "mode": "list",
+          "cachedResultName": "stage"
+        },
+        "topK": 3,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.1,
+      "position": [
+        460,
+        200
+      ],
+      "id": "3a951b89-585d-4de5-a5ad-786c831706d2",
+      "name": "Qdrant Vector Store",
+      "credentials": {
+        "qdrantApi": {
+          "id": "sFfERYppMeBnFNeA",
+          "name": "Local QdrantApi database"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "nomic-embed-text:latest"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        560,
+        420
+      ],
+      "id": "218e922b-fc73-4853-9bcc-62acd653e8d3",
+      "name": "Embeddings Ollama",
+      "credentials": {
+        "ollamaApi": {
+          "id": "nnIt1tPpUClVBxc5",
+          "name": "Ollama account 3"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2855cbdd-5877-4641-bf3f-9cc67214cd3e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "558d88703fb65b2d0e44613bc35916258b0f0bf983c5d4730c00c424b77ca36a"
+  },
+  "id": "fTZ63lNKnDJKeHkn",
+  "tags": []
+}

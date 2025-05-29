@@ -1,0 +1,287 @@
+{
+  "name": "qdrant",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "allowFileUploads": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ded71ab8-f674-4f2c-8622-71b3bdafab71",
+      "name": "When chat message received",
+      "webhookId": "4ac7ffc0-25cb-4999-ba65-0021ab53e9cd"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "stage",
+          "mode": "id"
+        },
+        "embeddingBatchSize": 8,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "typeVersion": 1.1,
+      "position": [
+        1220,
+        -140
+      ],
+      "id": "58b89b95-1b92-47d3-a4e5-fca73da08edb",
+      "name": "Qdrant Vector Store",
+      "retryOnFail": false,
+      "credentials": {
+        "qdrantApi": {
+          "id": "sFfERYppMeBnFNeA",
+          "name": "Local QdrantApi database"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "nomic-embed-text:latest"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        100
+      ],
+      "id": "580ab2d4-1147-48c6-8c51-f3582e9f980e",
+      "name": "Embeddings Ollama",
+      "credentials": {
+        "ollamaApi": {
+          "id": "nnIt1tPpUClVBxc5",
+          "name": "Ollama account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.text }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "Onderwerp",
+                "value": "={{ $('Extract from File').item.json.info.Title }}"
+              },
+              {
+                "name": "soort document",
+                "value": "={{ $('When chat message received').item.json.files[0].fileExtension }}"
+              },
+              {
+                "name": "auteur",
+                "value": "={{ $('Extract from File').item.json.info.Author }}"
+              },
+              {
+                "name": "versie",
+                "value": "={{ $('Extract from File').item.json.version }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        1320,
+        80
+      ],
+      "id": "39dc3d88-7cd0-48c4-b574-4c4eaf439030",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "chunkSize": 500,
+        "chunkOverlap": 150
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterTokenSplitter",
+      "typeVersion": 1,
+      "position": [
+        1320,
+        260
+      ],
+      "id": "3a1e0e7c-6686-4a05-998d-13bbdb8220f7",
+      "name": "Token Splitter"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.files[0].fileExtension }}",
+              "operation": "contains",
+              "value2": "pdf"
+            }
+          ]
+        }
+      },
+      "name": "IF: PDF",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        240,
+        0
+      ],
+      "id": "ef897b9f-b009-4d1d-84ce-615c914094ac"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "=data0",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        560,
+        -140
+      ],
+      "id": "c5d8965c-f8f4-4986-912e-2d38eb6ec0d7",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        740,
+        -140
+      ],
+      "id": "bd7b2226-c1e3-4d1a-8578-81f4a718dffb",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "jsCode": "const chunks = [];\nconst chunkSize = 1000; // in characters (tokens = ±0.75*karakters)\nconst overlap = 200;\n\nconst input = items[0].json.text;\n\nfor (let i = 0; i < input.length; i += chunkSize - overlap) {\n  chunks.push({ json: { text: input.slice(i, i + chunkSize) } });\n}\n\nreturn chunks.map(c => ({ json: c.json }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        -140
+      ],
+      "id": "d7e3690e-fab7-4d23-ba0b-4c4cd215e6a8",
+      "name": "Code"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "IF: PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: PDF": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Vector Store": {
+      "main": [
+        []
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fd98e297-8fc2-47a6-9345-67b89084cc05",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "558d88703fb65b2d0e44613bc35916258b0f0bf983c5d4730c00c424b77ca36a"
+  },
+  "id": "Fctwig3Bo733aqrj",
+  "tags": []
+}
